@@ -17,7 +17,7 @@ With this container you can create a telephony system in your office or house wi
  * Container size: approx 2.3GB
 
 ### Run FreePBX image
-
+* mkdir /home/pi/Docker/freepbx/backup -p && mkdir /home/pi/Docker/freepbx/recordings -p
 * Run ```docker-compose up -d```
 * Open web admin panel at your raspberry pi's ip-address
 
