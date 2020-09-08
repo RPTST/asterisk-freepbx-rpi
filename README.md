@@ -21,7 +21,7 @@ With this container you can create a telephony system in your office or house wi
 * cd asterisk-freepbx-rpi/
 * Run ```docker-compose up -d```aspberry pi 4 1 GB module (test)
 ** Note this process will take about 25 minutes of R
-* Open web admin panel at your raspberry pi's ip-address
+* Open web admin panel at your raspberry pi's ip-address (Cam not access needs testing)
 
 
 ### Credits
