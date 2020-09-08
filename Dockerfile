@@ -30,21 +30,24 @@ RUN printf "Package: *\nPin: release n=stretch\nPin-Priority: 900\nPackage: *\nP
 
 ### Build SpanDSP
 RUN mkdir /TEMP \
-#RUN mkdir -p /usr/src/spandsp \
-#	wget https://github.com/wdoekes/spandsp-forks/releases/tag/snapshot/spandsp-20180108.tar.gz | tar xvfz - --strip 1 -C /usr/src/spandsp && \
-#	cd /usr/src/spandsp && \
-#	./configure && \
-#	make && \
-#	make install
 	&& cd /TEMP
-COPY ./config/libspandsp2_0.0.6-2.1_armhf.deb /TEMP/libspandsp2_0.0.6-2.1_armhf.deb
-RUN  dpkg -i libspandsp2_0.0.6-2.1_armhf.deb || true
+#COPY ./config/libspandsp2_0.0.6-2.1_armhf.deb /TEMP/libspandsp2_0.0.6-2.1_armhf.deb
+#RUN  dpkg -i libspandsp2_0.0.6-2.1_armhf.deb || true
+COPY ./config/gdrive_download.sh gdrive_download.sh
+RUN chmod +x gdrive_download.sh \
+	&& ./gdrive_download.sh \
+	&& dpkg -i libspandsp2_0.0.6-2.1_armhf.deb || true
 
 ### Build Asterisk 15.7.2
-RUN cd /usr/src \
-	&& wget https://downloads.asterisk.org/pub/telephony/asterisk/old-releases/asterisk-15.7.2.tar.gz \
+#RUN cd /usr/src \
+#	&& wget https://downloads.asterisk.org/pub/telephony/asterisk/old-releases/asterisk-15.7.1.tar.gz \
+RUN cd /TEMP/
+COPY ./config/gdrive_asterisk.sh gdrive_asterisk.sh
+RUN chmod +x gdrive_asterisk.sh \
+        && ./gdrive_asterisk.sh \
+	&& mv asterisk-15.7.2.tar.gz /usr/src/asterisk-15.7.2.tar.gz \
+	&& cd /usr/src \
 	&& tar xfz asterisk-15.7.2.tar.gz \
-	&& rm -f asterisk-15.7.2.tar.gz \
 	&& cd asterisk-* \
 	&& contrib/scripts/get_mp3_source.sh \
 	&& ./configure --with-resample --with-pjproject-bundled --with-jansson-bundled --with-ssl=ssl --with-srtp \
@@ -82,10 +85,15 @@ COPY ./config/odbcinst.ini /etc/odbcinst.ini
 COPY ./config/odbc.ini /etc/odbc.ini
 
 ### Install FreePBX 14.0 latest
-RUN cd /usr/src \
-	&& wget http://mirror.freepbx.org/modules/packages/freepbx/freepbx-14.0-latest.tgz \
+#RUN cd /usr/src \
+#	&& wget http://mirror.freepbx.org/modules/packages/freepbx/freepbx-14.0-latest.tgz \
+RUN cd /TEMP/
+COPY ./config/gdrive_freepbx.sh gdrive_freepbx.sh
+RUN chmod +x gdrive_freepbx.sh \
+        && ./gdrive_freepbx.sh \
+	&& mv freepbx-14.0-latest.tgz /usr/src/freepbx-14.0-latest.tgz \
+	&& cd /usr/src \
 	&& tar xfz freepbx-14.0-latest.tgz \
-	&& rm -f freepbx-14.0-latest.tgz \
 	&& cd freepbx \
 	&& chown mysql:mysql -R /var/lib/mysql/* \
 	&& /etc/init.d/mysql start \
@@ -132,6 +140,7 @@ RUN sed -i 's/^user		= mysql/user		= root/' /etc/mysql/my.cnf
 RUN mkdir -p /var/run/fail2ban && \
              cd / && \
              rm -rf /usr/src/* /tmp/* /etc/cron* && \
+             apt --fix-broken install -y && \
              apt-get purge -y autoconf automake bison build-essential doxygen flex libasound2-dev libcurl4-openssl-dev \
              libedit-dev libical-dev libiksemel-dev libjansson-dev libmariadbclient-dev libncurses5-dev libneon27-dev \
              libnewt-dev libogg-dev libresample1-dev libspandsp-dev libsqlite3-dev libsrtp0-dev libssl-dev libtiff-dev \
