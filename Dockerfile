@@ -29,16 +29,20 @@ RUN printf "Package: *\nPin: release n=stretch\nPin-Priority: 900\nPackage: *\nP
 	&& rm /etc/apt/preferences.d/jessie
 
 ### Build SpanDSP
-RUN mkdir -p /usr/src/spandsp && \
-	curl -kL https://www.soft-switch.org/downloads/spandsp/snapshots/spandsp-20180108.tar.gz | tar xvfz - --strip 1 -C /usr/src/spandsp && \
-	cd /usr/src/spandsp && \
-	./configure && \
-	make && \
-	make install 
+RUN mkdir /TEMP \
+#RUN mkdir -p /usr/src/spandsp \
+#	wget https://github.com/wdoekes/spandsp-forks/releases/tag/snapshot/spandsp-20180108.tar.gz | tar xvfz - --strip 1 -C /usr/src/spandsp && \
+#	cd /usr/src/spandsp && \
+#	./configure && \
+#	make && \
+#	make install
+	&& cd /TEMP
+COPY ./config/libspandsp2_0.0.6-2.1_armhf.deb /TEMP/libspandsp2_0.0.6-2.1_armhf.deb
+RUN  dpkg -i libspandsp2_0.0.6-2.1_armhf.deb || true
 
 ### Build Asterisk 15.7.2
 RUN cd /usr/src \
-	&& wget http://downloads.asterisk.org/pub/telephony/asterisk/asterisk-15.7.2.tar.gz \
+	&& wget https://downloads.asterisk.org/pub/telephony/asterisk/old-releases/asterisk-15.7.2.tar.gz \
 	&& tar xfz asterisk-15.7.2.tar.gz \
 	&& rm -f asterisk-15.7.2.tar.gz \
 	&& cd asterisk-* \
@@ -103,21 +107,24 @@ RUN cd /usr/src \
 RUN a2enmod rewrite
 
 ### Add G729 Codecs 1.0.4 for Asterisk 15
-RUN	git clone https://github.com/BelledonneCommunications/bcg729 /usr/src/bcg729 ; \
-	cd /usr/src/bcg729 ; \
-	git checkout tags/1.0.4 ; \
-	./autogen.sh ; \
-	./configure --libdir=/lib ; \
-	make ; \
-	make install ; \
-	\
-	mkdir -p /usr/src/asterisk-g72x ; \
-	curl https://bitbucket.org/arkadi/asterisk-g72x/get/default.tar.gz | tar xvfz - --strip 1 -C /usr/src/asterisk-g72x ; \
-	cd /usr/src/asterisk-g72x ; \
-	./autogen.sh ; \
-	./configure CFLAGS='-march=armv7' --with-bcg729 --with-asterisk150 --enable-penryn; \
-	make ; \
-	make install
+RUN	cd /usr/src \
+	&& git clone https://github.com/RPTST/bcg729.git \
+	&& cd bcg729 \
+	&& git checkout tags/1.0.4 \
+	&& ./autogen.sh \
+	&& ./configure --libdir=/lib \
+	&& make \
+	&& make install \
+	&& mkdir -p /usr/src/asterisk-g72x \
+	&& cd /usr/src \
+	&& git clone https://github.com/RPTST/asterisk-g72x.git \
+#	&& curl https://bitbucket.org/arkadi/asterisk-g72x/get/default.tar.gz | tar xvfz - --strip 1 -C /usr/src/asterisk-g72x \
+#	&& rm -f asterisk-g72x-1.4.3.tar.bz2 \
+	&& cd asterisk-g72x \
+	&& ./autogen.sh  \
+	&& ./configure CFLAGS='-march=armv7' --with-bcg729 --with-asterisk150 --enable-penryn \
+	&& make \
+	&& make install
 
 RUN sed -i 's/^user		= mysql/user		= root/' /etc/mysql/my.cnf
 
